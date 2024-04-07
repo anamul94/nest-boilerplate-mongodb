@@ -35,7 +35,6 @@ export class AuthController {
   @ApiBody({ type: SignupDto })
   @ApiOkResponse({ type: User })
   signUp(@Body() dto: SignupDto): Promise<User> {
-    console.log(dto);
     return this.authService.signUp(dto);
   }
 

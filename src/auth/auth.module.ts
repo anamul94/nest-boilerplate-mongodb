@@ -7,14 +7,15 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './stragegies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { MailSender } from 'src/util/mailsend';
+import { EncryptionService } from 'src/util/encryption';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: process.env.JWT_EXPIRATION },
+      secret: 'secret',
+      signOptions: { expiresIn: '1d' },
     }),
   ],
   providers: [
@@ -23,6 +24,7 @@ import { MailSender } from 'src/util/mailsend';
     JwtStrategy,
     GoogleStrategy,
     MailSender,
+    EncryptionService,
   ],
   exports: [AuthService],
   controllers: [AuthController],

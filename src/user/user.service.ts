@@ -1,32 +1,32 @@
-import { Role } from './entities/role.entity';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import UserRepository from './user.repository';
-import { RoleRepository } from './role.repository';
 import { SignupDto } from 'src/auth/dto/signup.dto';
 import { RoleUpdateDto } from './dto/role.update.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Role, User } from './entities';
+import { IdGenerator } from 'src/util/id-generator';
+
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private readonly userRepository: UserRepository,
-    @InjectRepository(Role) private readonly roleRepository: RoleRepository,
+    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Role.name) private roleModel: Model<Role>,
   ) {}
 
   async getRoleByName(roleName: string): Promise<Role> {
-    return this.roleRepository.findOneBy({ roleName: roleName });
+    return this.roleModel.findOne({ roleName: roleName }).exec();
   }
 
   async createUser(dto: SignupDto): Promise<User> {
-    const isUser = await this.userRepository.findOneBy({ email: dto.email });
+    const isUser = await this.userModel.findOne({ email: dto.email }).exec();
     if (isUser) {
       throw new BadRequestException('User already exists.');
     }
     let role: Role;
     if (dto.roleId) {
-      role = await this.roleRepository.findOneBy({ id: dto.roleId });
+      role = await this.roleModel.findById(dto.roleId).exec();
       if (!role) {
         throw new BadRequestException('Role not found.');
       }
@@ -34,28 +34,33 @@ export class UsersService {
 
     const { firstName, lastName, email, password } = dto;
 
-    const newUser = await this.userRepository.create({
+    const id = IdGenerator.generateId().toString();
+    // console.log(id);
+
+    const newUser = new this.userModel({
       firstName,
       lastName,
       email,
       password,
       role,
     });
-    console.log(newUser);
-    await newUser.role;
-    const savedUser = await this.userRepository.save(newUser);
+    console.log(newUser._id);
+    await newUser.save();
+    console.log(newUser._id);
+    // newUser.role = await newUser.role;
+    const savedUser = await newUser.save();
     delete savedUser.password;
     return savedUser;
   }
 
   async updateUser(id: string, dto: UpdateUserDto): Promise<User> {
-    const user = await this.userRepository.findOneBy({ id: id });
+    const user = await this.userModel.findById(id).exec();
     if (!user) {
       throw new BadRequestException('User not found.');
     }
     if (dto.firstName) user.firstName = dto.firstName;
     if (dto.lastName) user.lastName = dto.lastName;
-    await this.userRepository.save(user);
+    await user.save();
 
     delete user.password;
 
@@ -64,18 +69,18 @@ export class UsersService {
 
   async setUserRole(dto: RoleUpdateDto): Promise<User[]> {
     const response: User[] = [];
-    const role = await this.roleRepository.findOneBy({ id: dto.roleId });
+    const role = await this.roleModel.findById(dto.roleId).exec();
     if (!role) {
       throw new BadRequestException('Role not found.');
     }
     for (const userId of dto.userIds) {
-      const user = await this.userRepository.findOneBy({ id: userId });
+      const user = await this.userModel.findById(userId).exec();
       if (!user) {
         console.error(`User with ID ${userId} not found`);
         continue;
       }
       user.role = role;
-      await this.userRepository.save(user);
+      await user.save();
       delete user.password;
       response.push(user);
     }
@@ -83,30 +88,31 @@ export class UsersService {
   }
 
   async findUserByEmail(email: string): Promise<User | undefined> {
-    return this.userRepository.findOneBy({ email: email });
+    return this.userModel.findOne({ email: email }).exec();
   }
 
   async findUserByEmailWithRole(email: string): Promise<User | undefined> {
-    const user = await this.userRepository.findOneBy({ email: email });
+    const user = await this.userModel.findOne({ email: email }).exec();
     if (!user) {
       return undefined;
     }
     const role = await user.role;
     if (role) {
       return {
-        ...user,
+        ...user.toObject(),
         role,
       };
     }
-    return user;
+    return user.toObject();
   }
 
   async getRole(): Promise<Role[]> {
-    return this.roleRepository.find();
+    return this.roleModel.find().exec();
   }
 
   async saveUser(user: User): Promise<User> {
-    return this.userRepository.save(user);
+    const userModelInstance = new this.userModel(user);
+    return await userModelInstance.save();
   }
 
   async createUserWithoutPassword({
@@ -114,6 +120,7 @@ export class UsersService {
     firstName,
     lastName,
   }): Promise<User> {
-    return this.userRepository.save({ email, firstName, lastName });
+    const newUser = new this.userModel({ email, firstName, lastName });
+    return newUser.save();
   }
 }

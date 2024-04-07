@@ -1,31 +1,15 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { RoleNames } from './role-names.enum';
 import { ApiProperty } from '@nestjs/swagger';
 
-@Entity()
+@Schema()
 export class Role {
-  @ApiProperty()
-  @PrimaryGeneratedColumn('increment')
-  id: Number;
+  @Prop({ type: String }) // Ensure type is defined for _id
+  _id: string;
 
   @ApiProperty()
-  @Column({ type: 'enum', enum: RoleNames })
+  @Prop()
   roleName: string;
-
-  // @OneToMany(() => User, (user) => user.role)
-  // users: User[];
-
-  @ApiProperty()
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @ApiProperty()
-  @UpdateDateColumn()
-  updatedAt: Date;
 }
+
+export const RoleSchema = SchemaFactory.createForClass(Role);

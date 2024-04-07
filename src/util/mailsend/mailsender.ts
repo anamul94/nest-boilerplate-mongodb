@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import 'dotenv/config';
 import { MailerSend, EmailParams, Sender, Recipient } from 'mailersend';
 
 @Injectable()

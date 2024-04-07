@@ -1,45 +1,34 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Role } from './role.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import mongoose, { ObjectId } from 'mongoose';
+import { Transform } from 'class-transformer';
 
-@Entity()
+@Schema({ timestamps: true })
 export class User {
   @ApiProperty()
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @Transform(({ value }) => value.toString())
+  _id: ObjectId;
 
   @ApiProperty()
-  @Column()
+  @Prop()
   firstName: string;
 
   @ApiProperty()
-  @Column()
+  @Prop()
   lastName: string;
 
   @ApiProperty()
-  @Column({ unique: true })
+  @Prop()
   email: string;
 
   @ApiProperty()
-  @Column({ nullable: true })
+  @Prop()
   password: string;
 
   @ApiProperty()
-  @ManyToOne(() => Role, (role) => role.id, { lazy: true })
+  @Prop({ type: Role, ref: 'Role' })
   role: Role;
-
-  @ApiProperty()
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @ApiProperty()
-  @UpdateDateColumn()
-  updatedAt: Date;
 }
+
+export const UserSchema = SchemaFactory.createForClass(User);
