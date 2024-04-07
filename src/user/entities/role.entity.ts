@@ -1,11 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { RoleNames } from './role-names.enum';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { ObjectId } from 'mongoose';
 
 @Schema()
 export class Role {
-  @Prop({ type: String }) // Ensure type is defined for _id
-  _id: string;
+  @ApiProperty()
+  @Transform(({ value }) => value.toString())
+  _id: ObjectId;
 
   @ApiProperty()
   @Prop()
