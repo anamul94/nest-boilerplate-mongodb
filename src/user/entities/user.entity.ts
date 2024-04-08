@@ -3,6 +3,7 @@ import { Role } from './role.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import mongoose, { ObjectId } from 'mongoose';
 import { Transform } from 'class-transformer';
+import { RoleNames } from './role-names.enum';
 
 @Schema({ timestamps: true })
 export class User {
@@ -27,7 +28,7 @@ export class User {
   password: string;
 
   @ApiProperty()
-  @Prop({ type: Role, ref: 'Role' })
+  @Prop({ type: Role, ref: 'Role', enum: [RoleNames.ADMIN, RoleNames.USER] })
   role: Role;
 }
 
